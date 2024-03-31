@@ -35,3 +35,11 @@ margin-left: 10px;
 .descriptionInput{
     
 }
+.ImagePreview{
+    height: 40px;
+    width: 40px;
+}
+.userPostImage{
+    width: 100px;
+    height: 80px;
+}
