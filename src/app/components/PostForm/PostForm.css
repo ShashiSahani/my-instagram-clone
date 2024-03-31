@@ -1,0 +1,37 @@
+.imageStyle{
+    display: none;
+}
+.labelStyle{
+    cursor: pointer;
+    background-color: burlywood;
+    padding: 10px;
+    border-radius: 2px;
+    font-weight: 800;
+}
+.uploadedImages,.imagePreviews{
+    display: flex;
+    /* flex-wrap: wrap; */
+    gap: 10px;
+    flex-direction: column;
+}
+
+.commentWrapper{
+    display: flex;
+    
+    margin-top: 10px;
+    margin-bottom: 10px;
+}
+.commentWrapper textarea{
+border: none;
+
+border-bottom: 1px solid black;
+}
+textarea:focus{
+    border-color: #fff;
+}
+.commentWrapper button{
+margin-left: 10px;
+}
+.descriptionInput{
+    
+}
