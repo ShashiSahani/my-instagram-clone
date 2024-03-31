@@ -1,12 +1,16 @@
 // frontend/components/PostForm.js
 "use client";
+// frontend/components/PostForm.js
 import { useEffect, useState } from "react";
 import PostCard from "../PostCard/PostCard";
-
+import { Button, Input } from "@mui/material";
+import AddBoxIcon from '@mui/icons-material/AddBox';
+import EmojiPicker from "emoji-picker-react";
 const PostForm = () => {
   const [selectedFile, setSelectedFile] = useState(null);
   const [description, setDescription] = useState("");
   const [imagePreview, setImagePreview] = useState(null);
+  const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const [posts, setPosts] = useState([]);
 
   useEffect(() => {
@@ -57,21 +61,47 @@ const PostForm = () => {
     localStorage.setItem("posts", JSON.stringify(updatedPosts));
   };
 
+  const handleEmojiSelect = (emojiObject) => {
+    try {
+      const emoji = emojiObject.emoji;
+      console.log('Selected emoji:', emoji);
+      if (emoji) {
+        setDescription(description + emoji);
+        setShowEmojiPicker(false);
+      } else {
+        console.error('No emoji selected');
+      }
+    } catch (error) {
+      console.error('Error selecting emoji:', error);
+    }
+  };
+  
+  
+  
+
   return (
     <div>
-      <h1>Post Form</h1>
-      <input type="file" onChange={handleFileChange} />
+      <h1>Instagram post</h1>
+      <label htmlFor="fileInput">
+        <AddBoxIcon titleAccess="Upload Image" />
+      </label>
+      <input type="file" id="fileInput" style={{ display: "none" }} onChange={handleFileChange} />
       <br />
       {imagePreview && (
-        <img src={imagePreview} alt="Image Preview" style={{ maxWidth: "100%", marginBottom: "10px" }} />
+        <div className="imagePreviewContainer" style={{ display: "flex", flexDirection: "column" }}>
+          <img src={imagePreview} alt="Image Preview" style={{ maxWidth: "100px", marginBottom: "10px" }} />
+          <Input
+            value={description}
+            onChange={handleDescriptionChange}
+            placeholder="Write a description..."
+            endAdornment={<Button onClick={() => setShowEmojiPicker(!showEmojiPicker)}>😊</Button>}
+          />
+         {showEmojiPicker && <EmojiPicker onEmojiClick={(emojiObject,event)=>handleEmojiSelect(emojiObject,event)} />}
+
+        </div>
       )}
-      <textarea
-        value={description}
-        onChange={handleDescriptionChange}
-        placeholder="Write a description..."
-      />
       <br />
-      <button onClick={handlePost}>Post</button>
+      <Button variant="outlined" onClick={handlePost}>Post</Button>
       <div>
         {posts.map((post, index) => (
           <PostCard
@@ -88,5 +118,6 @@ const PostForm = () => {
 };
 
 export default PostForm;
+
 
 
