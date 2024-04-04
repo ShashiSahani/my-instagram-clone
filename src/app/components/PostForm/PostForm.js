@@ -3,7 +3,7 @@
 // frontend/components/PostForm.js
 import { useEffect, useState } from "react";
 import PostCard from "../PostCard/PostCard";
-import { Button, Input } from "@mui/material";
+import { Button, Card, Input } from "@mui/material";
 import AddBoxIcon from '@mui/icons-material/AddBox';
 import EmojiPicker from "emoji-picker-react";
 const PostForm = () => {
@@ -81,7 +81,7 @@ const PostForm = () => {
 
   return (
     <div>
-      <h1>Instagram post</h1>
+      
       <label htmlFor="fileInput">
         <AddBoxIcon titleAccess="Upload Image" />
       </label>
@@ -104,13 +104,16 @@ const PostForm = () => {
       <Button variant="outlined" onClick={handlePost}>Post</Button>
       <div>
         {posts.map((post, index) => (
+
+        <Card   key={index} sx={{display:"flex",justifyContent:"center",background:"white",mt:5,maxWidth: 345,maxHeight:445,border: '1px solid #e0e0e0',boxShadow: '0px 3px 6px rgba(0, 0, 0, 0.5)'}}>
           <PostCard
-            key={index}
+          
             post={post}
             index={index}
             onDelete={handleDelete}
             onEdit={handleEdit}
           />
+        </Card>
         ))}
       </div>
     </div>
