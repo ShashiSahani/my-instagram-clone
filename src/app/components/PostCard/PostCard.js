@@ -13,6 +13,7 @@ function PostCard({ post, index, onDelete, onEdit }) {
   const [disabled, setDisabled] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [newDescription, setNewDescription] = useState(post.description);
+  console.log(post.description,"kfkjdsnfcn")
   const [like, setLike] = useState(0);
 
   const handleLike = () => {
