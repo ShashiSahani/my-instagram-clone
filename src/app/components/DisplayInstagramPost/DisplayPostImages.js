@@ -57,7 +57,24 @@ function DisplayImages() {
   if (error) {
     return <p>Error: {error}</p>;
   }
-  const handleLike = () => {};
+ 
+  const handleLike = async (postId, currentLikes, index) => {
+    try {
+      // Increment the like count locally
+      const updatedImages = [...images];
+      updatedImages[index].likes++;
+      setImages(updatedImages);
+      
+      // Make a PUT request to update the like count on the server
+      await axios.put(`http://localhost:5000/posts/${postId}`, { likes: updatedImages[index].likes });
+    } catch (error) {
+      if (error.response) {
+        console.error("Error updating like:", error.response.data);
+      } else {
+        console.error("Error updating like:", error.message);
+      }
+    }
+  };
 
   return (
     <>
@@ -77,10 +94,10 @@ function DisplayImages() {
                 }} // Ensure image is displayed as block
               />
               <p> Description :{image.description}</p>
-              <IconButton onClick={handleLike} title="Like">
-                <FavoriteIcon style={{ color: likeColor ? "red" : "black" }} />
+              <IconButton onClick={()=>handleLike(image._id,image.likes,index)} title="Like">
+                <FavoriteIcon style={{ color: image.likes> 0 ? "red" : "black" }} />
               </IconButton>
-              <span>{image.like}</span>
+              <span>{image.likes}</span>
               <p>
                 {!image.comments === 0
                   ? "No Comments"
