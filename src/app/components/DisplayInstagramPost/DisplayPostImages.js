@@ -6,13 +6,50 @@ import FavoriteIcon from "@mui/icons-material/Favorite";
 
 import DeleteIcon from "@mui/icons-material/Delete";
 import axios from "axios";
-
+import websocket from 'websocket';
 function DisplayImages() {
   const [images, setImages] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [like, setLike] = useState(0);
   const [likeColor, setLikeColor] = useState(false);
+  const [ws, setWebSocket] = useState(null); 
+
+  
+  useEffect(() => {
+    // Establish WebSocket connection
+    const socket = new WebSocket('ws://localhost:8080');
+
+    socket.onopen = () => {
+      console.log('WebSocket connected');
+    };
+
+    socket.onmessage = (event) => {
+      const updatedData = JSON.parse(event.data);
+      setImages((prevImages) =>
+        prevImages.map((image) =>
+          image._id === updatedData._id ? updatedData : image
+        )
+      );
+    };
+
+    socket.onerror = (error) => {
+      console.error('WebSocket error:', error);
+      setError('WebSocket connection error');
+    };
+
+    socket.onclose = () => {
+      console.log('WebSocket connection closed');
+    };
+
+    setWebSocket(socket);
+
+    return () => {
+      if (socket.readyState === WebSocket.OPEN) {
+        socket.close();
+      }
+    };
+  }, []);
   useEffect(() => {
     const fetchImages = async () => {
       try {
@@ -31,6 +68,9 @@ function DisplayImages() {
     };
 
     fetchImages();
+
+
+
   }, []);
 
   const handleDelete = async (postId) => {
@@ -57,16 +97,20 @@ function DisplayImages() {
   if (error) {
     return <p>Error: {error}</p>;
   }
- 
   const handleLike = async (postId, currentLikes, index) => {
     try {
-      // Increment the like count locally
+      // Calculate the updated like count by incrementing by 1
+      const updatedLikes = currentLikes + 1;
+  
+      // Send a PUT request with updated likes as a URL parameter
+      await axios.put(`http://localhost:5000/posts/${postId}?likes=${updatedLikes}`);
+  
+      // Update the local state with the updated like count
       const updatedImages = [...images];
-      updatedImages[index].likes++;
+      updatedImages[index].likes = updatedLikes;
       setImages(updatedImages);
-      
-      // Make a PUT request to update the like count on the server
-      await axios.put(`http://localhost:5000/posts/${postId}`, { likes: updatedImages[index].likes });
+  
+      console.log("Updated likes:", updatedLikes);
     } catch (error) {
       if (error.response) {
         console.error("Error updating like:", error.response.data);
@@ -75,7 +119,14 @@ function DisplayImages() {
       }
     }
   };
+  
+  
 
+  
+  
+  
+  
+  
   return (
     <>
       <main>
@@ -107,7 +158,7 @@ function DisplayImages() {
                 title="Delete"
                 onClick={() => handleDelete(image._id)}
               >
-                <DeleteIcon />
+                <DeleteIcon  />
               </IconButton>
             </div>
           ))}
