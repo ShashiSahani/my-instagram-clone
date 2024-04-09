@@ -15,9 +15,8 @@ export default function page() {
 
   return (
     <main>
-      {/* <NavBar />
-      <PostForm onSubmit={handleSubmit} /> */}
-      <UploadInstagramPost/>
+      <NavBar />
+    
     </main>
   );
 }
