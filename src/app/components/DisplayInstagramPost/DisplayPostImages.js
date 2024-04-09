@@ -1,65 +1,26 @@
-// "use client"
 import React, { useState, useEffect } from "react";
-import ImageMethods from "../ImageMethods/ImageMethods";
-import { IconButton } from "@mui/material";
+import { IconButton, TextField, Modal, Box } from "@mui/material";
 import FavoriteIcon from "@mui/icons-material/Favorite";
-
 import DeleteIcon from "@mui/icons-material/Delete";
 import axios from "axios";
-import websocket from 'websocket';
-function DisplayImages() {
+import SendIcon from "@mui/icons-material/Send";
+import TurnedInNotIcon from '@mui/icons-material/TurnedInNot';
+import "./DisplayImage.css";
+import { ModeCommentOutlined } from "@mui/icons-material";
+function DisplayImages({ postId, initialLikes }) {
   const [images, setImages] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [like, setLike] = useState(0);
-  const [likeColor, setLikeColor] = useState(false);
-  const [ws, setWebSocket] = useState(null); 
-
-  
-  useEffect(() => {
-    // Establish WebSocket connection
-    const socket = new WebSocket('ws://localhost:8080');
-
-    socket.onopen = () => {
-      console.log('WebSocket connected');
-    };
-
-    socket.onmessage = (event) => {
-      const updatedData = JSON.parse(event.data);
-      setImages((prevImages) =>
-        prevImages.map((image) =>
-          image._id === updatedData._id ? updatedData : image
-        )
-      );
-    };
-
-    socket.onerror = (error) => {
-      console.error('WebSocket error:', error);
-      setError('WebSocket connection error');
-    };
-
-    socket.onclose = () => {
-      console.log('WebSocket connection closed');
-    };
-
-    setWebSocket(socket);
-
-    return () => {
-      if (socket.readyState === WebSocket.OPEN) {
-        socket.close();
-      }
-    };
-  }, []);
+  const [commentInput, setCommentInput] = useState(""); // State to store the comment input
+  const [likes, setLikes] = useState(initialLikes);
+  const [commentInputs, setCommentInputs] = useState([]);
+  const [openModal, setOpenModal] = useState(false);
+  const [selectedImageComments, setSelectedImageComments] = useState([]);
   useEffect(() => {
     const fetchImages = async () => {
       try {
-        const response = await fetch("http://localhost:5000/posts");
-        if (!response.ok) {
-          throw new Error("Failed to fetch images");
-        }
-        const imageData = await response.json();
-        console.log(imageData);
-        setImages(imageData);
+        const response = await axios.get("http://localhost:5000/posts");
+        setImages(response.data);
         setLoading(false);
       } catch (error) {
         setError(error.message);
@@ -68,28 +29,62 @@ function DisplayImages() {
     };
 
     fetchImages();
-
-
-
   }, []);
 
   const handleDelete = async (postId) => {
     try {
-      // Make a DELETE request to delete this post
       await axios.delete(`http://localhost:5000/posts/${postId}`);
-      // Update images state after deletion
       setImages((prevImages) =>
         prevImages.filter((image) => image._id !== postId)
       );
     } catch (error) {
-      if (error.response) {
-        console.error("Error deleting post:", error.response.data);
-      } else {
-        console.error("Error deleting post:", error.message);
-      }
+      console.error(
+        "Error deleting post:",
+        error.response?.data || error.message
+      );
     }
   };
 
+  const handleLike = async (postId, index) => {
+    try {
+      const response = await axios.put(
+        `http://localhost:5000/posts/${postId}/likes`
+      );
+      console.log("old like", response.data);
+      const updatedLikes = response.data.likes;
+      console.log(updatedLikes, "updated like");
+      const updatedImages = [...images];
+      updatedImages[index].likes = updatedLikes;
+      setImages(updatedImages);
+    } catch (error) {
+      console.error(
+        "Error updating likes:",
+        error.response?.data || error.message
+      );
+    }
+  };
+
+  const handleCommentSubmit = async (postId) => {
+    try {
+      const response = await axios.post(
+        `http://localhost:5000/posts/${postId}/comments`,
+        { text: commentInput }
+      );
+      console.log("Comment submitted successfully:", response.data);
+      setCommentInput(""); // Clear the comment input field after submission
+    } catch (error) {
+      console.error(
+        "Error submitting comment:",
+        error.response?.data || error.message
+      );
+    }
+  };
+
+  const handleCommentInputChange = (e, index) => {
+    const updatedCommentInputs = [...commentInputs];
+    updatedCommentInputs[index] = e.target.value;
+    setCommentInputs(updatedCommentInputs);
+  };
   if (loading) {
     return <p>Loading...</p>;
   }
@@ -97,74 +92,119 @@ function DisplayImages() {
   if (error) {
     return <p>Error: {error}</p>;
   }
-  const handleLike = async (postId, currentLikes, index) => {
+  const handleOpenModal = async (postId) => {
     try {
-      // Calculate the updated like count by incrementing by 1
-      const updatedLikes = currentLikes + 1;
-  
-      // Send a PUT request with updated likes as a URL parameter
-      await axios.put(`http://localhost:5000/posts/${postId}?likes=${updatedLikes}`);
-  
-      // Update the local state with the updated like count
-      const updatedImages = [...images];
-      updatedImages[index].likes = updatedLikes;
-      setImages(updatedImages);
-  
-      console.log("Updated likes:", updatedLikes);
+      const response = await axios.get(
+        `http://localhost:5000/posts/${postId}/comments`
+      );
+      setSelectedImageComments(response.data.comments);
+      setOpenModal(true);
     } catch (error) {
-      if (error.response) {
-        console.error("Error updating like:", error.response.data);
-      } else {
-        console.error("Error updating like:", error.message);
-      }
+      console.error(
+        "Error fetching comments:",
+        error.response?.data || error.message
+      );
     }
   };
-  
-  
 
-  
-  
-  
-  
-  
+  const handleCloseModal = () => {
+    setOpenModal(false);
+  };
   return (
-    <>
-      <main>
-        <h2>Images</h2>
-        <section>
-          {images.map((image, index) => (
-            <div key={index}>
-              <img
-                src={image.image}
-                alt={`Image ${index}`}
-                style={{
-                  width: "200px",
-                  height: "200px",
-                  margin: "10px",
-                  display: "block",
-                }} // Ensure image is displayed as block
-              />
-              <p> Description :{image.description}</p>
-              <IconButton onClick={()=>handleLike(image._id,image.likes,index)} title="Like">
-                <FavoriteIcon style={{ color: image.likes> 0 ? "red" : "black" }} />
-              </IconButton>
-              <span>{image.likes}</span>
-              <p>
-                {!image.comments === 0
-                  ? "No Comments"
-                  : `${image.comments} Comments`}
-              </p>
+    <main>
+      <h2>Images</h2>
+      <h2>Total Post:{images.length}</h2>
+      <section >
+        {images.map((image, index) => (
+          <Box key={index}>
+            <img
+              src={image.image}
+              alt={`Image ${index}`}
+              style={{
+                width: "200px",
+                height: "200px",
+                margin: "10px",
+                display: "block",
+             
+              }}
+            />
+         
+            <section style={{display:"flex",alignItems:"center",marginTop:"10px"}}>
+            <div>
               <IconButton
-                title="Delete"
-                onClick={() => handleDelete(image._id)}
+              onClick={() => handleLike(image._id, index)}
+              title="Like"
+            >
+              <FavoriteIcon
+                style={{ color: image.likes > 0 ? "red" : "black" }}
+              />
+            </IconButton>
+            <span>{image.likes}</span>
+
+           
+
+            <IconButton
+              onClick={() => handleOpenModal(image._id)}
+              title="View Comments"
+            >
+            <ModeCommentOutlined/>
+
+            </IconButton>
+            <IconButton title="Delete" onClick={() => handleDelete(image._id)}>
+              <DeleteIcon />
+            </IconButton>
+
+              </div>
+              <div>
+              <TurnedInNotIcon  title="Save"/>
+              </div>
+        
+            </section>
+
+
+            <div>
+           
+              <TextField
+                label="Add a comment"
+                value={commentInput}
+                id="standard-basic"
+               variant="standard" 
+                onChange={(e) => setCommentInput(e.target.value)}
+              />
+              <IconButton
+                onClick={() => handleCommentSubmit(image._id)}
+                title="Submit Comment"
+                disabled={!commentInput.trim()} // Disable button if commentInput is empty or contains only whitespace
               >
-                <DeleteIcon  />
+                <SendIcon />
               </IconButton>
+             <p> description: {image.description}</p>
+            <p onClick={()=>setOpenModal(true)} style={{fontSize:"18px",color:"black" ,cursor:"pointer"}} >View All {image.comments.length} comments </p>
+
             </div>
+
+          
+          </Box>
+        ))}
+      </section>
+      <Modal open={openModal} onClose={handleCloseModal}>
+        <div
+          style={{
+            width: 400,
+            height: 400,
+            backgroundColor: "white",
+            padding: 20,
+          }}
+        >
+          <h2>Comments</h2>
+          {selectedImageComments.map((comment, index) => (
+            <ul key={index}>
+              <li>{comment.text}</li>
+            </ul>
           ))}
-        </section>
-      </main>
-    </>
+        </div>
+      </Modal>
+    </main>
   );
 }
 

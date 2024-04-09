@@ -4,18 +4,26 @@ import DisplayImages from '../DisplayInstagramPost/DisplayPostImages';
 
 function UploadInstagramPost() {
   const [image, setImage] = useState(null);
+  const [description, setDescription] = useState(""); // State to store the description
   const [success, setSuccess] = useState(false);
   const [error, setError] = useState(null);
 
   const handleImageChange = (event) => {
     setImage(event.target.files[0]);
   };
-useEffect(()=>{
-    setError(null)
-},[image])
+
+  const handleDescriptionChange = (event) => {
+    setDescription(event.target.value);
+  };
+
+  useEffect(() => {
+    setError(null);
+  }, [image]);
+
   const handleSubmit = async () => {
     const formData = new FormData();
     formData.append('image', image);
+    formData.append('description', description); // Append description to the form data
 
     try {
       const response = await fetch('http://localhost:5000/posts', {
@@ -44,6 +52,7 @@ useEffect(()=>{
    <>
     <div>
       <input type="file" accept="image/*" onChange={handleImageChange} />
+      <input type="text" placeholder="Description" value={description} onChange={handleDescriptionChange} /> {/* Input field for description */}
       <button onClick={handleSubmit}>Upload</button>
       {success && <p>Image uploaded successfully</p>}
       {error && <p style={{color:'red'}}> {error}</p>}
@@ -56,4 +65,3 @@ useEffect(()=>{
 }
 
 export default UploadInstagramPost;
-
